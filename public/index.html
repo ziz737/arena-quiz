@@ -482,6 +482,7 @@ function initSocket() {
 
   // GUEST: Game started
   socket.on('game:started', () => {
+    if (S.isHost) return; // المضيف لا يُحوَّل لشاشة اللاعب
     go('player-screen');
     notify('🎮 المسابقة بدأت! استعد!');
   });
