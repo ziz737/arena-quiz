@@ -70,7 +70,8 @@ io.on('connection', (socket) => {
     const room = rooms[socket.roomCode];
     if (!room || socket.id !== room.hostId) return;
     room.status = 'playing';
-    io.to(socket.roomCode).emit('game:started');
+    // أرسل فقط للاعبين وليس للمضيف
+    socket.to(socket.roomCode).emit('game:started');
   });
 
   // HOST: Send Question
