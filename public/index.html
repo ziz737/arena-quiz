@@ -93,7 +93,7 @@ body{font-family:'Tajawal',sans-serif;background:var(--dark);color:var(--text);m
   border-radius:9px;padding:6px 16px;font-size:20px;font-weight:900;color:var(--gold);letter-spacing:6px;}
 
 /* HOST MAIN LAYOUT: 3 columns */
-.host-grid{display:grid;grid-template-columns:260px 1fr 280px;gap:12px;flex:1;}
+.host-grid{display:grid;grid-template-columns:260px 1fr;gap:12px;flex:1;}
 
 /* PLAYERS PANEL */
 .panel{background:var(--card);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:18px;backdrop-filter:blur(20px);overflow:hidden;}
@@ -134,7 +134,10 @@ body{font-family:'Tajawal',sans-serif;background:var(--dark);color:var(--text);m
 .q-cat{position:absolute;top:12px;left:14px;background:rgba(0,245,255,.2);border-radius:6px;padding:3px 9px;font-size:10px;color:var(--neon);}
 .q-idx{position:absolute;top:12px;right:14px;background:rgba(139,0,255,.4);border-radius:6px;padding:3px 9px;font-size:10px;color:rgba(255,255,255,.6);}
 .opts-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
-.opt-h{padding:12px 14px;background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.1);border-radius:10px;color:white;font-family:'Tajawal',sans-serif;font-size:13px;font-weight:600;text-align:right;transition:all .3s;}
+.opt-h{padding:12px 14px;background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.1);border-radius:10px;color:white;font-family:'Tajawal',sans-serif;font-size:13px;font-weight:600;text-align:right;transition:all .3s;width:100%;}
+.host-opt-btn{cursor:pointer;}
+.host-opt-btn:hover:not(:disabled):not(.sel):not(.correct):not(.wrong){background:rgba(0,245,255,.1);border-color:var(--neon);transform:scale(1.01);}
+.opt-h.sel{background:rgba(139,0,255,.3)!important;border-color:var(--purple)!important;}
 .opt-h.correct{background:rgba(0,255,136,.2);border-color:var(--correct);color:var(--correct);}
 .opt-h.wrong{background:rgba(255,51,85,.15);border-color:rgba(255,51,85,.3);}
 .host-actions{display:flex;gap:8px;}
@@ -256,7 +259,7 @@ body{font-family:'Tajawal',sans-serif;background:var(--dark);color:var(--text);m
     <div class="footer-credit">
       <p>برمجة</p>
       <p>عبدالعزيز الحودي</p>
-      <a href="mailto:ziz737@gmail.com">ziz737@gmail.com</a>
+      <a href="/cdn-cgi/l/email-protection#156f7c6f222622557278747c793b767a78"><span class="__cf_email__" data-cfemail="077d6e7d30343047606a666e6b2964686a">[email&#160;protected]</span></a>
     </div>
   </div>
 </div>
@@ -341,11 +344,18 @@ body{font-family:'Tajawal',sans-serif;background:var(--dark);color:var(--text);m
       </div>
     </div>
 
-    <!-- COL 2: Question Control -->
+    <!-- COL 2: Question + Unified Options -->
     <div class="panel q-panel">
-      <div class="timer-num" id="hTimer">⏱</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div class="timer-num" id="hTimer" style="margin-bottom:0">⏱</div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:11px;color:rgba(255,255,255,.4);">نقاطك</span>
+          <div style="background:linear-gradient(135deg,rgba(255,215,0,.2),rgba(255,165,0,.15));border:1px solid var(--gold);border-radius:8px;padding:4px 14px;font-size:20px;font-weight:900;color:var(--gold);font-family:'Cairo',sans-serif;" id="hostScoreNum">0</div>
+        </div>
+      </div>
       <div class="timer-bar-wrap"><div class="timer-bar" id="hTimerBar" style="width:100%"></div></div>
       <div class="q-box" id="hQBox"><span style="color:rgba(255,255,255,.3)">اضغط "سؤال جديد" لبدء الجولة</span></div>
+      <!-- خيارات موحدة: قابلة للنقر للمضيف + تعرض الإجابة الصحيحة -->
       <div class="opts-grid" id="hOptsGrid">
         <div class="opt-h">أ) —</div><div class="opt-h">ب) —</div>
         <div class="opt-h">ج) —</div><div class="opt-h">د) —</div>
@@ -354,21 +364,6 @@ body{font-family:'Tajawal',sans-serif;background:var(--dark);color:var(--text);m
         <button class="btn-act purple" onclick="hostNextQ()">🎲 سؤال جديد</button>
         <button class="btn-act green" onclick="hostReveal()">✅ كشف الإجابة</button>
         <button class="btn-act red" onclick="hostEnd()">🏁 إنهاء</button>
-      </div>
-    </div>
-
-    <!-- COL 3: Host as Player -->
-    <div class="panel host-player-panel">
-      <div class="panel-ttl">🎮 إجابتك</div>
-      <div class="host-score-box">
-        <div class="host-score-label">نقاطك</div>
-        <div class="host-score-num" id="hostScoreNum">0</div>
-      </div>
-      <div style="margin-top:12px">
-        <div style="font-size:11px;color:rgba(255,255,255,.35);margin-bottom:8px;text-align:center">اختر إجابتك أيضاً!</div>
-        <div class="host-opts" id="hostOptsList">
-          <div style="color:rgba(255,255,255,.2);font-size:12px;text-align:center;padding:20px 0">انتظر السؤال...</div>
-        </div>
       </div>
     </div>
 
@@ -422,7 +417,7 @@ body{font-family:'Tajawal',sans-serif;background:var(--dark);color:var(--text);m
   </div>
 </div>
 
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 const QS = [
   {cat:"🔬 علوم",q:"ما هو العنصر الكيميائي الأكثر وفرة في الكون؟",o:["الأكسجين","الهيدروجين","الهيليوم","الكربون"],a:1},
   {cat:"🔬 علوم",q:"كم تبلغ سرعة الضوء في الفراغ تقريباً؟",o:["100,000 كم/ث","200,000 كم/ث","300,000 كم/ث","500,000 كم/ث"],a:2},
@@ -1193,14 +1188,14 @@ function initSocket() {
     // handled via player:point for correct, feedback below
   });
 
-  socket.on('player:point', ({ score }) => {
+  socket.on('player:point', ({ score, earned }) => {
     S.score = score;
     if (S.isHost) {
       document.getElementById('hostScoreNum').textContent = score;
     } else {
       document.getElementById('pScoreBadge').textContent = score;
     }
-    showFeedback(true);
+    showFeedback(true, earned);
     confetti();
   });
 
@@ -1215,8 +1210,8 @@ function initSocket() {
     }
   });
 
-  socket.on('host:fastest', ({ name, time }) => {
-    document.getElementById('fastestLine').textContent = `⚡ الأسرع: ${name} (${(time/1000).toFixed(1)}ث)`;
+  socket.on('host:fastest', ({ name, time, pts }) => {
+    document.getElementById('fastestLine').textContent = `⚡ الأسرع: ${name} — +${pts} نقطة`;
   });
 
   socket.on('game:ended', ({ players }) => {
@@ -1247,10 +1242,12 @@ function notify(msg) {
   setTimeout(() => n.classList.remove('show'), 3000);
 }
 
-function showFeedback(correct) {
+function showFeedback(correct, earned) {
   const overlay = document.getElementById('feedback');
   document.getElementById('fbEmoji').textContent = correct ? '🎉' : '😔';
-  document.getElementById('fbText').textContent = correct ? '+1 نقطة! أحسنت!' : 'إجابة خاطئة!';
+  document.getElementById('fbText').textContent = correct
+    ? `+${earned || 1} نقطة! أحسنت! ⚡`
+    : 'إجابة خاطئة!';
   document.getElementById('fbCard').className = 'fb-card ' + (correct ? 'c' : 'w');
   overlay.classList.add('show');
   setTimeout(() => overlay.classList.remove('show'), 1800);
@@ -1313,7 +1310,7 @@ function hostNextQ() {
   clearInterval(S.timerInterval);
   const q = getRandomQ();
   S.currentQ = q;
-  S.timerVal = 20;
+  S.timerVal = 10;
   S.answered = false;
   document.getElementById('fastestLine').textContent = '—';
 
@@ -1323,8 +1320,11 @@ function hostNextQ() {
     <span class="q-idx">س ${q.index}</span>
     <span>${q.q}</span>`;
   const letters = ['أ','ب','ج','د'];
+  // Unified opts: clickable for host, shows reveal state
   document.getElementById('hOptsGrid').innerHTML = q.o.map((o,i) =>
-    `<div class="opt-h" id="hOpt${i}">${letters[i]}) ${o}</div>`).join('');
+    `<button class="opt-h host-opt-btn" id="hOpt${i}" onclick="hostAnswer(${i})">
+      <span style="opacity:.6;margin-left:6px">${letters[i]})</span> ${o}
+    </button>`).join('');
 
   // Send to server (with answer for scoring)
   socket.emit('host:question', {
@@ -1335,44 +1335,42 @@ function hostNextQ() {
 }
 
 function renderHostAnswerBtns(data) {
-  // Host receives question:new — render his personal answer buttons
+  // Unified: hOptsGrid already rendered in hostNextQ - just reset answered state
   S.answered = false;
-  const letters = ['أ','ب','ج','د'];
-  document.getElementById('hostOptsList').innerHTML = data.options.map((o,i) => `
-    <button class="h-opt" id="hSelfOpt${i}" onclick="hostAnswer(${i})">
-      <span class="opt-ltr">${letters[i]}</span>
-      <span>${o}</span>
-    </button>`).join('');
+  // Re-enable all unified buttons
+  document.querySelectorAll('.host-opt-btn').forEach(b => {
+    b.disabled = false;
+    b.className = 'opt-h host-opt-btn';
+  });
 }
 
 function hostAnswer(idx) {
   if (S.answered) return;
   S.answered = true;
-  document.querySelectorAll('.h-opt').forEach(b => b.disabled = true);
-  document.getElementById(`hSelfOpt${idx}`)?.classList.add('sel');
+  document.querySelectorAll('.host-opt-btn').forEach(b => b.disabled = true);
+  document.getElementById(`hOpt${idx}`)?.classList.add('sel');
   socket.emit('player:answer', { optIndex: idx });
   notify('✅ تم تسجيل إجابتك!');
 }
 
 function revealHostOpts(correctIdx) {
-  // Reveal on host's personal answer buttons
-  document.querySelectorAll('.h-opt').forEach((btn, i) => {
+  // Unified reveal on hOpt buttons
+  document.querySelectorAll('.host-opt-btn').forEach((btn, i) => {
     btn.disabled = true;
-    if (i === correctIdx) btn.classList.add('correct');
-    else if (btn.classList.contains('sel')) btn.classList.add('wrong');
+    if (i === correctIdx) btn.className = 'opt-h host-opt-btn correct';
+    else if (btn.classList.contains('sel')) btn.className = 'opt-h host-opt-btn wrong';
+    else btn.className = 'opt-h host-opt-btn';
   });
 }
 
 function revealHostControlOpts(correctIdx) {
-  // Reveal on host control panel opts display
-  ['أ','ب','ج','د'].forEach((_, i) => {
-    const el = document.getElementById(`hOpt${i}`);
-    if (el) el.className = 'opt-h ' + (i === correctIdx ? 'correct' : 'wrong');
-  });
+  // Same as revealHostOpts since unified
+  revealHostOpts(correctIdx);
 }
 
 function startHostTimer() {
-  const total = 20;
+  const TOTAL = 10;
+  const total = TOTAL;
   S.timerVal = total;
   clearInterval(S.timerInterval);
   S.timerInterval = setInterval(() => {
@@ -1387,15 +1385,18 @@ function startHostTimer() {
 }
 
 function disableHostOpts() {
-  document.querySelectorAll('.h-opt').forEach(b => b.disabled = true);
+  document.querySelectorAll('.host-opt-btn').forEach(b => b.disabled = true);
 }
 
 function hostReveal() {
   if (!S.currentQ) { notify('⚠️ اختر سؤالاً أولاً'); return; }
   clearInterval(S.timerInterval);
+  disableHostOpts();
   socket.emit('host:reveal');
   const ans = S.currentQ.a;
   const letters = ['أ','ب','ج','د'];
+  // Reveal locally on host panel too
+  revealHostOpts(ans);
   notify(`✅ الإجابة: ${letters[ans]}) ${S.currentQ.o[ans]}`);
 }
 
@@ -1476,7 +1477,7 @@ function renderPlayerQuestion(data) {
 
   clearInterval(S.timerInterval);
   const elapsed = (Date.now() - data.startTime) / 1000;
-  let rem = Math.max(0, 20 - elapsed);
+  let rem = Math.max(0, 10 - elapsed);
   document.getElementById('pTimer').textContent = Math.ceil(rem);
   S.timerInterval = setInterval(() => {
     rem -= 0.1;
@@ -1529,12 +1530,5 @@ function restart() {
   document.getElementById('pWaiting').style.display = 'block';
   document.getElementById('pGame').style.display = 'none';
   document.getElementById('pScoreBadge').textContent = '0';
-  document.getElementById('hostScoreNum').textContent = '0';
-  document.getElementById('hostOptsList').innerHTML = '<div style="color:rgba(255,255,255,.2);font-size:12px;text-align:center;padding:20px 0">انتظر السؤال...</div>';
-  go('s-entry');
-}
-
-initSocket();
-</script>
-</body>
-</html>
+  if(document.getElementById('hostScoreNum')) document.getElementById('hostScoreNum').textContent = '0';
+ 
