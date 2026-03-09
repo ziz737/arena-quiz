@@ -489,6 +489,7 @@ function initSocket() {
 
   // GUEST: New question
   socket.on('question:new', (data) => {
+    if (S.isHost) return; // المضيف عنده S.currentQ كاملاً مع الإجابة
     S.answered = false;
     S.currentQ = data;
     renderPlayerQuestion(data);
