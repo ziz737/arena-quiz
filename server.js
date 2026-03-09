@@ -5,7 +5,14 @@ const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: "*", methods: ["GET", "POST"] } });
+const io = new Server(server, {
+  cors: { origin: "*", methods: ["GET", "POST"] },
+  // Render.com: ابدأ بـ polling ثم انتقل لـ WebSocket
+  transports: ['polling', 'websocket'],
+  allowEIO3: true,
+  pingTimeout: 60000,
+  pingInterval: 25000,
+});
 app.use(express.static(path.join(__dirname, 'public')));
 
 const rooms = {};
@@ -78,13 +85,18 @@ io.on('connection', (socket) => {
     player.answered = true;
     player.pendingAnswer = optIndex;
     const answerTime = Date.now() - (room.question?.startTime || Date.now());
+    const TOTAL_TIME = 10; // seconds
+    const remainingSecs = Math.max(1, Math.ceil(TOTAL_TIME - answerTime / 1000));
     const correctAnswer = room.question?.answer;
     const isCorrect = optIndex === correctAnswer;
-    if (isCorrect && !room.fastestAnswer) {
-      room.fastestAnswer = { name: player.name, id: socket.id, time: answerTime };
-      player.score += 1;
-      io.to(room.hostId).emit('host:fastest', { name: player.name, time: answerTime });
-      socket.emit('player:point', { score: player.score });
+    if (isCorrect) {
+      // Points = remaining seconds (1-10)
+      player.score += remainingSecs;
+      if (!room.fastestAnswer) {
+        room.fastestAnswer = { name: player.name, id: socket.id, time: answerTime };
+        io.to(room.hostId).emit('host:fastest', { name: player.name, time: answerTime, pts: remainingSecs });
+      }
+      socket.emit('player:point', { score: player.score, earned: remainingSecs });
     }
     socket.emit('player:answer:confirm', { isCorrect, optIndex, correctAnswer: isCorrect ? correctAnswer : -1 });
     io.to(socket.roomCode).emit('room:players', getPlayers(room));
@@ -95,13 +107,6 @@ io.on('connection', (socket) => {
     const room = rooms[socket.roomCode];
     if (!room || socket.id !== room.hostId) return;
     const answer = room.question?.answer;
-    Object.keys(room.players).forEach(id => {
-      const p = room.players[id];
-      if (p.pendingAnswer === answer && !room.fastestAnswer) {
-        p.score += 1;
-        io.to(id).emit('player:point', { score: p.score });
-      }
-    });
     io.to(socket.roomCode).emit('question:reveal', { correctAnswer: answer });
     io.to(socket.roomCode).emit('room:players', getPlayers(room));
   });
