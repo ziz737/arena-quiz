@@ -80,11 +80,16 @@ io.on('connection', (socket) => {
     const answerTime = Date.now() - (room.question?.startTime || Date.now());
     const correctAnswer = room.question?.answer;
     const isCorrect = optIndex === correctAnswer;
-    if (isCorrect && !room.fastestAnswer) {
-      room.fastestAnswer = { name: player.name, id: socket.id, time: answerTime };
-      player.score += 1;
-      io.to(room.hostId).emit('host:fastest', { name: player.name, time: answerTime });
-      socket.emit('player:point', { score: player.score });
+    if (isCorrect) {
+      // Points = remaining seconds (max 10, min 1)
+      const elapsedSec = answerTime / 1000;
+      const points = Math.max(1, Math.round(10 - elapsedSec));
+      player.score += points;
+      if (!room.fastestAnswer) {
+        room.fastestAnswer = { name: player.name, id: socket.id, time: answerTime };
+        io.to(room.hostId).emit('host:fastest', { name: player.name, time: answerTime });
+      }
+      socket.emit('player:point', { score: player.score, points });
     }
     socket.emit('player:answer:confirm', { isCorrect, optIndex, correctAnswer: isCorrect ? correctAnswer : -1 });
     io.to(socket.roomCode).emit('room:players', getPlayers(room));
@@ -95,11 +100,15 @@ io.on('connection', (socket) => {
     const room = rooms[socket.roomCode];
     if (!room || socket.id !== room.hostId) return;
     const answer = room.question?.answer;
+    const revealTime = Date.now();
     Object.keys(room.players).forEach(id => {
       const p = room.players[id];
-      if (p.pendingAnswer === answer && !room.fastestAnswer) {
-        p.score += 1;
-        io.to(id).emit('player:point', { score: p.score });
+      if (p.pendingAnswer === answer) {
+        const answerTime = (revealTime - (room.question?.startTime || revealTime));
+        const elapsedSec = answerTime / 1000;
+        const points = Math.max(1, Math.round(10 - elapsedSec));
+        p.score += points;
+        io.to(id).emit('player:point', { score: p.score, points });
       }
     });
     io.to(socket.roomCode).emit('question:reveal', { correctAnswer: answer });
