@@ -118,6 +118,12 @@ body{font-family:'Tajawal',sans-serif;background:var(--dark);color:var(--text);m
   text-align:center;font-size:20px;font-weight:700;line-height:1.65;color:white;position:relative;}
 .q-cat{position:absolute;top:12px;left:14px;background:rgba(0,245,255,.2);border-radius:6px;padding:3px 9px;font-size:10px;color:var(--neon);}
 .q-idx{position:absolute;top:12px;right:14px;background:rgba(139,0,255,.4);border-radius:6px;padding:3px 9px;font-size:10px;color:rgba(255,255,255,.6);}
+.host-opts{display:flex;flex-direction:column;gap:7px;}
+.h-opt{padding:11px 14px;background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.1);border-radius:11px;color:white;font-family:'Tajawal',sans-serif;font-size:14px;font-weight:600;cursor:pointer;text-align:right;transition:all .22s cubic-bezier(.34,1.56,.64,1);display:flex;align-items:center;gap:9px;}
+.h-opt:hover:not(:disabled):not(.sel){background:rgba(0,245,255,.1);border-color:var(--neon);transform:scale(1.01);}
+.h-opt.sel{background:rgba(139,0,255,.3);border-color:var(--purple);cursor:not-allowed;}
+.h-opt.correct{background:rgba(0,255,136,.25)!important;border-color:var(--correct)!important;color:var(--correct)!important;}
+.h-opt.wrong{background:rgba(255,51,85,.25)!important;border-color:var(--wrong)!important;color:var(--wrong)!important;}
 .host-actions{display:flex;gap:8px;}
 .btn-act{flex:1;padding:13px;border:none;border-radius:10px;font-family:'Tajawal',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all .3s;}
 .btn-act:hover{transform:translateY(-2px);}
@@ -237,6 +243,10 @@ body{font-family:'Tajawal',sans-serif;background:var(--dark);color:var(--text);m
       <button class="btn-entry guest" onclick="go('s-guest-setup')">🎮 دخول اللاعب</button>
     </div>
     <div id="connStatus" style="margin-top:16px;font-size:12px;color:rgba(255,255,255,.3)">جارٍ الاتصال...</div>
+    <div style="margin-top:22px;padding-top:16px;border-top:1px solid rgba(255,255,255,.07);text-align:center;">
+      <p style="font-size:11px;color:rgba(255,255,255,.22);letter-spacing:1px;margin-bottom:5px">برمجة</p>
+      <a href="mailto:ziz737@gmail.com" style="font-size:13px;color:rgba(0,245,255,.5);text-decoration:none;font-weight:600;transition:color .3s" onmouseover="this.style.color='rgba(0,245,255,1)'" onmouseout="this.style.color='rgba(0,245,255,.5)'">ziz737@gmail.com</a>
+    </div>
   </div>
 </div>
 
@@ -300,21 +310,27 @@ body{font-family:'Tajawal',sans-serif;background:var(--dark);color:var(--text);m
   <div class="host-hdr">
     <div class="host-title">👑 <span id="hostNameBadge">المضيف</span></div>
     <div style="display:flex;align-items:center;gap:9px">
-      <div class="stat answered" id="answeredStat">0 أجاب</div>
-      <div class="stat total" id="totalStat">من 0</div>
-      <span style="color:rgba(255,255,255,.35);font-size:11px;margin-right:6px">الغرفة</span>
+      <span style="color:rgba(255,255,255,.35);font-size:11px">الغرفة</span>
       <div class="code-badge" id="hCodeBadge">---</div>
     </div>
   </div>
 
   <div class="host-grid">
-    <!-- السؤال والتحكم -->
+    <!-- السؤال + إجابات المضيف + أزرار التحكم -->
     <div class="panel q-panel">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
         <div class="timer-num" id="hTimer" style="margin:0;font-size:26px;min-width:44px">⏱</div>
         <div class="timer-bar-wrap" style="flex:1;margin:0"><div class="timer-bar" id="hTimerBar" style="width:100%"></div></div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <div class="stat answered" id="answeredStat">0 أجاب</div>
+          <div class="stat total" id="totalStat">من 0</div>
+        </div>
       </div>
       <div class="q-box" id="hQBox"><span style="color:rgba(255,255,255,.3)">اضغط "سؤال جديد" لبدء الجولة</span></div>
+      <!-- خيارات إجابة المضيف -->
+      <div class="host-opts" id="hostOptsList" style="margin-bottom:12px">
+        <div style="color:rgba(255,255,255,.2);font-size:12px;text-align:center;padding:10px 0">انتظر السؤال...</div>
+      </div>
       <div class="host-actions">
         <button class="btn-act purple" onclick="hostNextQ()">🎲 سؤال جديد</button>
         <button class="btn-act red" onclick="hostEnd()">🏁 إنهاء المسابقة</button>
@@ -466,6 +482,7 @@ function initSocket() {
   socket.on('question:reveal', ({ correctAnswer }) => {
     clearInterval(S.timerInterval);
     if (S.isHost) {
+      revealHostOpts(correctAnswer);
       if (S.currentQ) {
         const letters = ['أ','ب','ج','د'];
         notify(`✅ الإجابة: ${letters[correctAnswer]}) ${S.currentQ.o[correctAnswer]}`);
@@ -583,6 +600,14 @@ function hostNextQ() {
     <span class="q-idx">س ${q.index}</span>
     <span>${q.q}</span>`;
 
+  // Render host answer buttons
+  const letters = ['أ','ب','ج','د'];
+  document.getElementById('hostOptsList').innerHTML = q.o.map((o,i) => `
+    <button class="h-opt" id="hSelfOpt${i}" onclick="hostAnswer(${i})">
+      <span class="opt-ltr" style="width:26px;height:26px;background:rgba(255,255,255,.1);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0">${letters[i]}</span>
+      <span>${o}</span>
+    </button>`).join('');
+
   // Send to server
   socket.emit('host:question', {
     question: q.q, options: q.o, category: q.cat, answer: q.a, index: q.index
@@ -594,6 +619,23 @@ function hostNextQ() {
 function renderHostAnswerBtns(data) {
   S.answered = false;
   S.revealDone = false;
+}
+
+function hostAnswer(idx) {
+  if (S.answered) return;
+  S.answered = true;
+  document.querySelectorAll('.h-opt').forEach(b => b.disabled = true);
+  document.getElementById(`hSelfOpt${idx}`)?.classList.add('sel');
+  socket.emit('player:answer', { optIndex: idx });
+  notify('✅ تم تسجيل إجابتك!');
+}
+
+function revealHostOpts(correctIdx) {
+  document.querySelectorAll('.h-opt').forEach((btn, i) => {
+    btn.disabled = true;
+    if (i === correctIdx) btn.classList.add('correct');
+    else if (btn.classList.contains('sel')) btn.classList.add('wrong');
+  });
 }
 
 function checkAutoReveal() {
