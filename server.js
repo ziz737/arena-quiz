@@ -100,17 +100,7 @@ io.on('connection', (socket) => {
     const room = rooms[socket.roomCode];
     if (!room || socket.id !== room.hostId) return;
     const answer = room.question?.answer;
-    const revealTime = Date.now();
-    Object.keys(room.players).forEach(id => {
-      const p = room.players[id];
-      if (p.pendingAnswer === answer) {
-        const answerTime = (revealTime - (room.question?.startTime || revealTime));
-        const elapsedSec = answerTime / 1000;
-        const points = Math.max(1, Math.round(10 - elapsedSec));
-        p.score += points;
-        io.to(id).emit('player:point', { score: p.score, points });
-      }
-    });
+    // نقاط اللاعبين تُحسب لحظة إجابتهم — لا نقاط إضافية عند الكشف
     io.to(socket.roomCode).emit('question:reveal', { correctAnswer: answer });
     io.to(socket.roomCode).emit('room:players', getPlayers(room));
   });
