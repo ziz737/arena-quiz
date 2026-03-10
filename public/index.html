@@ -350,6 +350,10 @@ body{font-family:'Tajawal',sans-serif;background:var(--dark);color:var(--text);m
         <div class="opt-h">أ) —</div><div class="opt-h">ب) —</div>
         <div class="opt-h">ج) —</div><div class="opt-h">د) —</div>
       </div>
+      <div style="font-size:11px;color:rgba(255,255,255,.35);margin-bottom:6px;text-align:center">👆 اضغط على إجابتك</div>
+      <div class="host-opts" id="hostOptsList" style="margin-bottom:10px">
+        <div style="color:rgba(255,255,255,.2);font-size:12px;text-align:center;padding:12px 0">انتظر السؤال...</div>
+      </div>
       <div class="host-actions">
         <button class="btn-act purple" onclick="hostNextQ()">🎲 سؤال جديد</button>
         <button class="btn-act green" onclick="hostReveal()">✅ كشف الإجابة</button>
@@ -357,17 +361,19 @@ body{font-family:'Tajawal',sans-serif;background:var(--dark);color:var(--text);m
       </div>
     </div>
 
-    <!-- COL 3: Host as Player -->
+    <!-- COL 3: Host Score + Stats -->
     <div class="panel host-player-panel">
-      <div class="panel-ttl">🎮 إجابتك</div>
+      <div class="panel-ttl">🎮 نقاطك</div>
       <div class="host-score-box">
-        <div class="host-score-label">نقاطك</div>
+        <div class="host-score-label">مجموع نقاطك</div>
         <div class="host-score-num" id="hostScoreNum">0</div>
       </div>
-      <div style="margin-top:12px">
-        <div style="font-size:11px;color:rgba(255,255,255,.35);margin-bottom:8px;text-align:center">اختر إجابتك أيضاً!</div>
-        <div class="host-opts" id="hostOptsList">
-          <div style="color:rgba(255,255,255,.2);font-size:12px;text-align:center;padding:20px 0">انتظر السؤال...</div>
+      <div style="margin-top:16px;background:rgba(255,255,255,.04);border-radius:12px;padding:14px;">
+        <div style="font-size:11px;color:rgba(255,255,255,.35);margin-bottom:6px;text-align:center;letter-spacing:1px;">💡 نظام النقاط</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.5);line-height:2;text-align:center">
+          <div>✅ إجابة صحيحة = ثواني المتبقية</div>
+          <div style="color:rgba(255,215,0,.6)">⚡ الأسرع يحصل على أكثر نقاط</div>
+          <div>❌ إجابة خاطئة = 0 نقطة</div>
         </div>
       </div>
     </div>
@@ -1190,17 +1196,17 @@ function initSocket() {
   });
 
   socket.on('player:answer:confirm', ({ isCorrect }) => {
-    // handled via player:point for correct, feedback below
+    if (!isCorrect) showFeedback(false, 0);
   });
 
-  socket.on('player:point', ({ score }) => {
+  socket.on('player:point', ({ score, points }) => {
     S.score = score;
     if (S.isHost) {
       document.getElementById('hostScoreNum').textContent = score;
     } else {
       document.getElementById('pScoreBadge').textContent = score;
     }
-    showFeedback(true);
+    showFeedback(true, points);
     confetti();
   });
 
@@ -1247,10 +1253,10 @@ function notify(msg) {
   setTimeout(() => n.classList.remove('show'), 3000);
 }
 
-function showFeedback(correct) {
+function showFeedback(correct, points) {
   const overlay = document.getElementById('feedback');
   document.getElementById('fbEmoji').textContent = correct ? '🎉' : '😔';
-  document.getElementById('fbText').textContent = correct ? '+1 نقطة! أحسنت!' : 'إجابة خاطئة!';
+  document.getElementById('fbText').textContent = correct ? `+${points||1} نقطة! أحسنت!` : 'إجابة خاطئة!';
   document.getElementById('fbCard').className = 'fb-card ' + (correct ? 'c' : 'w');
   overlay.classList.add('show');
   setTimeout(() => overlay.classList.remove('show'), 1800);
@@ -1313,7 +1319,7 @@ function hostNextQ() {
   clearInterval(S.timerInterval);
   const q = getRandomQ();
   S.currentQ = q;
-  S.timerVal = 20;
+  S.timerVal = 10;
   S.answered = false;
   document.getElementById('fastestLine').textContent = '—';
 
@@ -1372,7 +1378,7 @@ function revealHostControlOpts(correctIdx) {
 }
 
 function startHostTimer() {
-  const total = 20;
+  const total = 10;
   S.timerVal = total;
   clearInterval(S.timerInterval);
   S.timerInterval = setInterval(() => {
@@ -1476,7 +1482,7 @@ function renderPlayerQuestion(data) {
 
   clearInterval(S.timerInterval);
   const elapsed = (Date.now() - data.startTime) / 1000;
-  let rem = Math.max(0, 20 - elapsed);
+  let rem = Math.max(0, 10 - elapsed);
   document.getElementById('pTimer').textContent = Math.ceil(rem);
   S.timerInterval = setInterval(() => {
     rem -= 0.1;
@@ -1525,7 +1531,7 @@ function showFinal(players) {
 function restart() {
   clearInterval(S.timerInterval);
   S = { roomCode:null, isHost:false, name:null, playerId:null, score:0, answered:false,
-        currentQ:null, timerInterval:null, timerVal:20, usedIdx:[], players:[] };
+        currentQ:null, timerInterval:null, timerVal:10, usedIdx:[], players:[] };
   document.getElementById('pWaiting').style.display = 'block';
   document.getElementById('pGame').style.display = 'none';
   document.getElementById('pScoreBadge').textContent = '0';
