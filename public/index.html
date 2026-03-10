@@ -346,11 +346,6 @@ body{font-family:'Tajawal',sans-serif;background:var(--dark);color:var(--text);m
       <div class="timer-num" id="hTimer">⏱</div>
       <div class="timer-bar-wrap"><div class="timer-bar" id="hTimerBar" style="width:100%"></div></div>
       <div class="q-box" id="hQBox"><span style="color:rgba(255,255,255,.3)">اضغط "سؤال جديد" لبدء الجولة</span></div>
-      <div class="opts-grid" id="hOptsGrid">
-        <div class="opt-h">أ) —</div><div class="opt-h">ب) —</div>
-        <div class="opt-h">ج) —</div><div class="opt-h">د) —</div>
-      </div>
-      <div style="font-size:11px;color:rgba(255,255,255,.35);margin-bottom:6px;text-align:center">👆 اضغط على إجابتك</div>
       <div class="host-opts" id="hostOptsList" style="margin-bottom:10px">
         <div style="color:rgba(255,255,255,.2);font-size:12px;text-align:center;padding:12px 0">انتظر السؤال...</div>
       </div>
@@ -1323,16 +1318,21 @@ function hostNextQ() {
   S.answered = false;
   document.getElementById('fastestLine').textContent = '—';
 
-  // Display question on host control panel
+  // Display question
   document.getElementById('hQBox').innerHTML = `
     <span class="q-cat">${q.cat}</span>
     <span class="q-idx">س ${q.index}</span>
     <span>${q.q}</span>`;
-  const letters = ['أ','ب','ج','د'];
-  document.getElementById('hOptsGrid').innerHTML = q.o.map((o,i) =>
-    `<div class="opt-h" id="hOpt${i}">${letters[i]}) ${o}</div>`).join('');
 
-  // Send to server (with answer for scoring)
+  // Render unified clickable options (host answers here)
+  const letters = ['أ','ب','ج','د'];
+  document.getElementById('hostOptsList').innerHTML = q.o.map((o,i) => `
+    <button class="h-opt" id="hSelfOpt${i}" onclick="hostAnswer(${i})">
+      <span class="opt-ltr">${letters[i]}</span>
+      <span>${o}</span>
+    </button>`).join('');
+
+  // Send to server
   socket.emit('host:question', {
     question: q.q, options: q.o, category: q.cat, answer: q.a, index: q.index
   });
@@ -1341,14 +1341,8 @@ function hostNextQ() {
 }
 
 function renderHostAnswerBtns(data) {
-  // Host receives question:new — render his personal answer buttons
+  // Host receives question:new from server — no need to re-render, hostNextQ already did it
   S.answered = false;
-  const letters = ['أ','ب','ج','د'];
-  document.getElementById('hostOptsList').innerHTML = data.options.map((o,i) => `
-    <button class="h-opt" id="hSelfOpt${i}" onclick="hostAnswer(${i})">
-      <span class="opt-ltr">${letters[i]}</span>
-      <span>${o}</span>
-    </button>`).join('');
 }
 
 function hostAnswer(idx) {
@@ -1361,7 +1355,6 @@ function hostAnswer(idx) {
 }
 
 function revealHostOpts(correctIdx) {
-  // Reveal on host's personal answer buttons
   document.querySelectorAll('.h-opt').forEach((btn, i) => {
     btn.disabled = true;
     if (i === correctIdx) btn.classList.add('correct');
@@ -1370,11 +1363,7 @@ function revealHostOpts(correctIdx) {
 }
 
 function revealHostControlOpts(correctIdx) {
-  // Reveal on host control panel opts display
-  ['أ','ب','ج','د'].forEach((_, i) => {
-    const el = document.getElementById(`hOpt${i}`);
-    if (el) el.className = 'opt-h ' + (i === correctIdx ? 'correct' : 'wrong');
-  });
+  // no-op: unified with revealHostOpts
 }
 
 function startHostTimer() {
