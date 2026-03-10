@@ -61,11 +61,12 @@ io.on('connection', (socket) => {
   socket.on('host:question', ({ question, options, category, answer, index }) => {
     const room = rooms[socket.roomCode];
     if (!room || socket.id !== room.hostId) return;
-    Object.keys(room.players).forEach(id => { room.players[id].answered = false; room.players[id].pendingAnswer = null; });
+    Object.keys(room.players).forEach(id => { room.players[id].answered = false; room.players[id].pendingAnswer = null; room.players[id].lastPoints = null; });
     room.fastestAnswer = null;
-    room.question = { question, options, category, answer, index, startTime: Date.now() };
+    const now = Date.now();
+    room.question = { question, options, category, answer, index, startTime: now };
     room.questionIndex = index;
-    io.to(socket.roomCode).emit('question:new', { question, options, category, index, startTime: Date.now() });
+    io.to(socket.roomCode).emit('question:new', { question, options, category, index, startTime: now, serverNow: now });
     io.to(socket.roomCode).emit('room:players', getPlayers(room));
   });
 
@@ -85,11 +86,14 @@ io.on('connection', (socket) => {
       const elapsedSec = answerTime / 1000;
       const points = Math.max(1, Math.round(10 - elapsedSec));
       player.score += points;
+      player.lastPoints = points;
       if (!room.fastestAnswer) {
         room.fastestAnswer = { name: player.name, id: socket.id, time: answerTime };
         io.to(room.hostId).emit('host:fastest', { name: player.name, time: answerTime });
       }
       socket.emit('player:point', { score: player.score, points });
+    } else {
+      player.lastPoints = 0;
     }
     socket.emit('player:answer:confirm', { isCorrect, optIndex, correctAnswer: isCorrect ? correctAnswer : -1 });
     io.to(socket.roomCode).emit('room:players', getPlayers(room));
