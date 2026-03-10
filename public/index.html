@@ -334,7 +334,7 @@ body{font-family:'Tajawal',sans-serif;background:var(--dark);color:var(--text);m
         <div style="color:rgba(255,255,255,.2);font-size:12px;text-align:center;padding:10px 0">انتظر السؤال...</div>
       </div>
       <div class="host-actions">
-        <button class="btn-act purple" onclick="hostNextQ()">🎲 سؤال جديد</button>
+        <button class="btn-act purple" id="btnNextQ" onclick="hostNextQ()">🎲 سؤال جديد</button>
         <button class="btn-act red" onclick="hostEnd()">🏁 إنهاء المسابقة</button>
       </div>
     </div>
@@ -343,6 +343,25 @@ body{font-family:'Tajawal',sans-serif;background:var(--dark);color:var(--text);m
     <div class="panel">
       <div class="panel-ttl">🏆 المتسابقون</div>
       <div class="p-list" id="hPList"><p style="color:rgba(255,255,255,.3);font-size:12px;text-align:center">لا يوجد لاعبون</p></div>
+    </div>
+
+    <!-- نظام النقاط أسفل الشاشة -->
+    <div class="panel" style="background:rgba(10,22,40,0.7);">
+      <div class="panel-ttl" style="justify-content:center;margin-bottom:10px">💡 نظام النقاط</div>
+      <div style="display:flex;justify-content:center;gap:24px;flex-wrap:wrap;">
+        <div style="text-align:center;font-size:12px;color:rgba(255,255,255,.5);">
+          <div style="font-size:22px;margin-bottom:4px">✅</div>
+          <div>صحيحة = الثواني المتبقية</div>
+        </div>
+        <div style="text-align:center;font-size:12px;color:rgba(255,215,0,.6);">
+          <div style="font-size:22px;margin-bottom:4px">⚡</div>
+          <div>الأسرع = أكثر نقاط</div>
+        </div>
+        <div style="text-align:center;font-size:12px;color:rgba(255,255,255,.5);">
+          <div style="font-size:22px;margin-bottom:4px">❌</div>
+          <div>خاطئة = 0 نقطة</div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -588,6 +607,16 @@ function getRandomQ() {
   return { ...QS[idx], index: S.usedIdx.length };
 }
 
+function setNextQBtn(enabled) {
+  const btn = document.getElementById('btnNextQ');
+  if (!btn) return;
+  btn.disabled = !enabled;
+  btn.style.opacity = enabled ? '1' : '0.4';
+  btn.style.cursor = enabled ? 'pointer' : 'not-allowed';
+  btn.style.transform = 'none';
+  btn.textContent = enabled ? '🎲 سؤال جديد' : '⏳ انتظر...';
+}
+
 function hostNextQ() {
   clearInterval(S.timerInterval);
   const q = getRandomQ();
@@ -616,6 +645,7 @@ function hostNextQ() {
   });
 
   startHostTimer();
+  setNextQBtn(false);
 }
 
 function renderHostAnswerBtns(data) {
@@ -654,12 +684,16 @@ function autoReveal() {
   S.revealDone = true;
   clearInterval(S.timerInterval);
   socket.emit('host:reveal');
+  enableNextQBtn();
 }
 
 function startHostTimer() {
   const total = 10;
   S.timerVal = total;
   S.revealDone = false;
+  // تعطيل زر سؤال جديد أثناء السؤال
+  const btn = document.getElementById('btnNextQ');
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.4'; btn.style.cursor = 'not-allowed'; }
   clearInterval(S.timerInterval);
   S.timerInterval = setInterval(() => {
     S.timerVal--;
@@ -673,6 +707,11 @@ function startHostTimer() {
       autoReveal();
     }
   }, 1000);
+}
+
+function enableNextQBtn() {
+  const btn = document.getElementById('btnNextQ');
+  if (btn) { btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer'; }
 }
 
 function hostReveal() {
